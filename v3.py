@@ -1,6 +1,5 @@
 import random
 
-
 def swap(arr, i, j):
     temp = arr[i]
     arr[i] = arr[j]
@@ -10,6 +9,7 @@ def partition(arr, left, right):
     p = arr[right]
     r = right
     l = left - 1
+    
     while True:
         l += 1
         while arr[l] < p:
@@ -21,6 +21,7 @@ def partition(arr, left, right):
             break
         else:
             swap(arr, l, r)
+            
     swap(arr, l, right)
     pivot = l
     return pivot
@@ -29,6 +30,7 @@ def partition(arr, left, right):
 def quickselect(arr, left, right, k):
     if right - left <= 0:
         return arr[left]
+    
     pivot = partition(arr, left, right)
     if k < pivot:
         return quickselect(arr, left, pivot - 1, k)
@@ -37,14 +39,9 @@ def quickselect(arr, left, right, k):
     else:
         return arr[pivot]
 
-
 def permuteList(arr):
     for i in range(len(arr)):
         j = random.randint(0, len(arr) - 1)
         swap(arr, i, j)
-
-arr = [10, 4, 5, 8, 6, 11, 26]
-permuteList(arr)
-k = 3
-result = quickselect(arr, 0, len(arr) - 1, k - 1)
-print(result)
+        
+        
