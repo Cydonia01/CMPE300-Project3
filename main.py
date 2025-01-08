@@ -2,103 +2,146 @@ import random
 import sys
 import time
 
-sys.setrecursionlimit(20000)
+# swapping function
+def swap(arr, i, j):
+    temp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = temp
 
-case = None
-version = None
-
-def selectCase():
-    global case
-    print()
-    print("Please select the case you want to run.")
-    print("1. Average Case")
-    print("2. Worst Case")
-    while True:
-        temp = input()
-        if temp == "1":
-            case = 1
-            break
-        elif temp == "2":
-            case = 2
-            break
-        elif temp == "exit":
-            sys.exit()
-        else:
-            print("Invalid Input. Please enter only 1, 2 or exit.")
-            continue
-
-def runVersion(version, arr, k):
-    if version == 1:
-        v1.quickselect(arr, 0, len(arr) - 1, k - 1)
-    elif version == 2:
-        v2.quickselect(arr, 0, len(arr) - 1, k - 1)
-    elif version == 3:
-        v3.permuteList(arr)
-        v3.quickselect(arr, 0, len(arr) - 1, k - 1)
-    elif version == 4:
-        x = 5
-        v4.quickselect(arr, 0, len(arr) - 1, k - 1, x)
-
-def printForN():
-    print()
-    print("Enter a number to select the value of n.")
-    print("1. n = 100")
-    print("2. n = 1000")
-    print("3. n = 10000")
-    print("4. Change Case")
+# partition function common for all versions
+def partition(arr, left, right):
+    p = arr[right]
+    r = right
+    l = left - 1
     
+    while True:
+        l += 1
+        while arr[l] < p:
+            l += 1
+        r -= 1
+        while arr[r] > p:
+            r -= 1
+        if l >= r:
+            break
+        else:
+            swap(arr, l, r)
+            
+    swap(arr, l, right)
+    pivot = l
+    return pivot
+
+# default quickselect function for v1 and v3
+def quickselect(arr, left, right, k):
+    if right - left <= 0:
+        return arr[left]
+    
+    pivot = partition(arr, left, right)
+    if k < pivot:
+        return quickselect(arr, left, pivot - 1, k)
+    elif k > pivot:
+        return quickselect(arr, pivot + 1, right, k)
+    else:
+        return arr[pivot]
+
+# modified quicksleect function for v2
+def quickselectV2(arr, left, right, k):
+    if right - left <= 0:
+        return arr[left]
+
+    # random pivot selection
+    pivot_index = random.randint(left, right)
+    swap(arr, pivot_index, right)
+    pivot = partition(arr, left, right)
+
+    if k < pivot:
+        return quickselectV2(arr, left, pivot - 1, k)
+    elif k > pivot:
+        return quickselectV2(arr, pivot + 1, right, k)
+    else:
+        return arr[pivot]
+
+# modified quickselect function for v4
+def quickselectV4(arr, left, right, k, x):
+    if left == right:
+        return arr[left]
+    
+    # median of medians pivot selection
+    pivot_value = median_of_medians(arr, left, right, x)
+    pivot_index = arr.index(pivot_value)
+    swap(arr, pivot_index, right)
+    pivot = partition(arr, left, right)
+
+    if k == pivot:
+        return arr[k]
+    elif k < pivot:
+        return quickselectV4(arr, left, pivot - 1, k, x)
+    else:
+        return quickselectV4(arr, pivot + 1, right, k, x)
+
+# function to permute the list for v3
+def permuteList(arr):
+    for i in range(len(arr)):
+        j = random.randint(0, len(arr) - 1)
+        swap(arr, i, j)
+
+# function to find the median of medians for v4
+def median_of_medians(arr, left, right, x):
+    sublists = []
+    for i in range(left, right + 1, x):
+        sublists.append(arr[i:i + x])
+    
+    medians = []
+    for sublist in sublists:
+        medians.append(sorted(sublist)[len(sublist) // 2])
+    
+    return sorted(medians)[len(medians) // 2]
+
+# function to write the array to the file
 def writeToFile(arr, file):
     for j in range(len(arr)):
         if j != len(arr) - 1:
             file.write(f"{arr[j]}-")
         else:
             file.write(f"{arr[j]}\n")
-    file.write("\n")
 
-print("Please select the version of QuickSelect you want to run. Enter exit to exit the program.")
-print("1. Version 1")
-print("2. Version 2")
-print("3. Version 3")
-print("4. Version 4")
-
-while True:
-    temp = input()
-    if temp == "1":
-        import v1
-        version = 1
-        break
-    elif temp == "2":
-        import v2
-        version = 2
-        break
-    elif temp == "3":
-        import v3
-        version = 3
-        break
-    elif temp == "4":
-        import v4
-        version = 4
-        break
-    elif temp == "exit":
-        sys.exit()
+# function to run the versions and write the results to the file
+def runVersion(file, arrays, k, versionNum):
+    totalTime = 0
+    # run the versions 5 times and calculate the average time
+    for arr in arrays:
+        if versionNum == 1:
+            startTime = time.perf_counter()
+            quickselect(arr, 0, len(arr) - 1, k)
+            totalTime += time.perf_counter() - startTime
+        if versionNum == 2:
+            startTime = time.perf_counter()
+            quickselectV2(arr, 0, len(arr) - 1, k)
+            totalTime += time.perf_counter() - startTime
+        if versionNum == 3:
+            permuteList(arr)
+            startTime = time.perf_counter()
+            quickselect(arr, 0, len(arr) - 1, k)
+            totalTime += time.perf_counter() - startTime
+        if versionNum == 4:
+            startTime = time.perf_counter()
+            quickselectV4(arr, 0, len(arr) - 1, k, 5)
+            totalTime += time.perf_counter() - startTime
+    if len(arrays) == 1:
+        file.write(f"Version{versionNum} Worst={(totalTime * 1000):.4f}\n")
     else:
-        print("Invalid Input. Please enter only 1, 2, 3, 4 or exit.")
-        continue
+        file.write(f"Version{versionNum} Average={(totalTime / 5 * 1000):.4f}\n")
 
-selectCase()
-print()
+# set the recursion limit to 20000 to avoid RecursionError
+sys.setrecursionlimit(20000)
 
 while True:
+    print("Enter a number to select the value of n. Write 'exit' to exit the program.")
+    print("1. n = 100")
+    print("2. n = 1000")
+    print("3. n = 10000")
     N = None
     k = None
-    arr = []
-    print("Current Version: Version " + str(version))
-    if case == 1:
-        print("Current Case: Average ")
-    else:
-        print("Current Case: Worst ")
 
-    printForN()
     while True:
         temp = input()
         if temp == "1":
@@ -110,48 +153,35 @@ while True:
         elif temp == "3":
             N = 10000
             break
-        elif temp == "4":
-            selectCase()
-            print()
-            print("Current Version: Version " + str(version))
-            if case == 1:
-                print("Current Case: Average ")
-            else:
-                print("Current Case: Worst ")
-            printForN()
-            continue
         elif temp == "exit":
             sys.exit()
         else:
-            print("Invalid Input. Please enter only 1, 2, 3, 4 or exit.")
+            print("Invalid Input. Please enter only 1, 2, 3 or exit.")
             continue
     
     print()
-    if case == 1:
-        print("Enter a number to select the value of k.")
-        print("1. k = 1")
-        print("2. k = n/2")
-        print("3. k = n-1")
-        
-        while True:
-            temp = input()
-            if temp == "1":
-                k = 1
-                break
-            elif temp == "2":
-                k = N // 2
-                break
-            elif temp == "3":
-                k = N - 1
-                break
-            elif temp == "exit":
-                sys.exit()
-            else:
-                print("Invalid Input. Please enter only 1, 2, 3 or exit.")
+    print("Enter a number to select the value of k.")
+    print("1. k = 1")
+    print("2. k = n/2")
+    print("3. k = n-1")
     
-        print()
-    else:
-        k = 1
+    while True:
+        temp = input()
+        if temp == "1":
+            k = 1
+            break
+        elif temp == "2":
+            k = N // 2
+            break
+        elif temp == "3":
+            k = N - 1
+            break
+        elif temp == "exit":
+            sys.exit()
+        else:
+            print("Invalid Input. Please enter only 1, 2, 3 or exit.")
+
+    print()
 
     print("Please select the type of input.")
     print("1. Type 1")
@@ -160,6 +190,7 @@ while True:
 
     inputType = None
     numRange = None
+    # set the range of the random numbers based on the input type
     while True:
         temp = input()
         if temp == "1":
@@ -182,35 +213,40 @@ while True:
 
     print()
     
-    file = open(f"output-v{version}-{case}-{N}-{k}-{inputType}.txt", "w")
+    # open the file to write the output
+    file = open(f"output-{N}-{inputType}-{k}.txt", "w")
+
+    # generate 5 random arrays
+    randomArrays = []
+    for i in range(5):
+        randomArrays.append([random.randint(1, numRange) for i in range(N)])
+        
+    file.write(f"n = {N}, Input Type{inputType}\n")
+    file.write(f"k = {k}\n")
     
-    if case == 1:
-        totalTime = 0
-        for i in range(5):
-            arr = [random.randint(1, numRange) for i in range(N)]
-            
-            file.write(f"case: average, n: {N}, k: {k}, input type: {inputType}, input: {i + 1}\n")
+    # write the random arrays to the file
+    for i in range(len(randomArrays)):
+        file.write(f"Input{i + 1} (average) = ")
+        writeToFile(randomArrays[i], file)
+    
+    # run all the versions
+    runVersion(file, randomArrays, k, 1)
+    runVersion(file, randomArrays, k, 2)
+    runVersion(file, randomArrays, k, 3)
+    runVersion(file, randomArrays, k, 4)
+    
+    # write the worst case input to the file
+    file.write("\n")
+    if k == 1:
+        worstArr = [[random.randint(1, numRange) for i in range(N)]]
+        worstArr[0].sort()
+        for arr in worstArr:
+            file.write(f"Input (worst) = ")
             writeToFile(arr, file)
             
-            startTime = time.perf_counter()
-            runVersion(version, arr, k)
-            totalTime += time.perf_counter() - startTime
-            
-        file.write(f"average time: {((totalTime / 5) * 1000):.6f}\n")
-        print(f"case: average, n: {N}, k: {k}, input type: {inputType}, average time: {((totalTime / 5) * 1000):.6f}\n")
-
-    else:
-        arr = [random.randint(1, numRange) for i in range(N)]
-        arr.sort()
-        
-        file.write(f"case: worst, n: {N}, k: {k}, input type: {inputType}\n")
-        writeToFile(arr, file)
-                
-        startTime = time.perf_counter()
-        runVersion(version, arr, k)
-        endTime = time.perf_counter()
-        
-        file.write(f"time: {((endTime - startTime) * 1000):.6f}")
-        print(f"case: worst, n: {N}, k: {k}, input type: {inputType}, time: {((endTime - startTime) * 1000):.6f}\n")
+        runVersion(file, worstArr, k, 1)
+        runVersion(file, worstArr, k, 2)
+        runVersion(file, worstArr, k, 3)
+        runVersion(file, worstArr, k, 4)
         
     file.close()
